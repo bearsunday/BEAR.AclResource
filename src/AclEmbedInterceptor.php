@@ -47,8 +47,8 @@ final class AclEmbedInterceptor implements MethodInterceptor
         AclInterface $acl,
         array $resources,
         ResourceInterface $resource,
-        RoleProviderInterface $provider)
-    {
+        RoleProviderInterface $provider
+    ) {
         $this->acl = $acl;
         $this->resources = $resources;
         $this->roleProvider = $provider;
@@ -83,7 +83,7 @@ final class AclEmbedInterceptor implements MethodInterceptor
             } catch (InvalidArgumentException $e) {
                 throw new InvalidResourceException($resource);
             }
-            if (!$isAllowed) {
+            if (! $isAllowed) {
                 continue;
             }
             $uri = sprintf('app://self/%s', $resource);
