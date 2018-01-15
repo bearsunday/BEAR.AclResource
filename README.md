@@ -14,7 +14,7 @@ You can change the resource tree of page without changing the source code.
 
 ## Composer install
 
-    $ composer require bearsunday/acl-resource-module 1.x-dev
+    $ composer require bearsunday/acl-resource 1.x-dev
     
 ## Module install
 

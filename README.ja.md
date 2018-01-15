@@ -14,7 +14,7 @@ An ACL embedded resources module for BEAR.Sunday
 
 ## Composer install
 
-    $ composer require bearsunday/acl-resource-module 1.x-dev
+    $ composer require bearsunday/acl-resource 1.x-dev
     
 ## Module install
 
