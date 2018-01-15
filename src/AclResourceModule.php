@@ -39,7 +39,7 @@ class AclResourceModule extends AbstractModule
     protected function configure()
     {
         $this->bind(AclInterface::class)->toInstance($this->acl);
-        $this->bind(RoleProviderInterface::class)->to(FakeRoleProvider::class);
+        $this->bind(RoleProviderInterface::class)->to($this->roleProvider);
         $this->bind()->annotatedWith('resources')->toInstance($this->resources);
         $this->bindInterceptor(
             $this->matcher->subclassesOf(ResourceObject::class),
