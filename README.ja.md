@@ -49,6 +49,7 @@ class AppModule extends AbstractModule
         // configure embedded resource list
         $resources = [
             '/blog' => ['entries', 'comments', 'friends'],
+            '/admin/setting' => ['user{?id}', 'freinds?user_id={id}'],
         ];
         // define provider
         $roleProviderClass = DevRoleProvider::class;
@@ -64,3 +65,8 @@ class AppModule extends AbstractModule
  * `$roleProviderClass`には現在のユーザーのロールを(ログイン状態などから)返すクラス名を指定します。`RoleProviderInterface`を実装する必要があります。
 
 上記に例では`guest`権限で`/blog`ページをアクセスすると`app://self/entries`と`app://self/comments`の**リクエスト**がそれぞれ`$body['entries]`に`$body['comments]`にセットされます。
+
+appリソースにクエリー（引数）を指定するには下記の２つの方法があります。
+
+ * URIパスの指定にuri templateを使う方法。ageリソースに渡されたクエリーをappリソースのクエリーに使います。例）`user{?id}`, `freinds?user_id={id}`
+ * 埋め込んだリソースリクエストに`addQuery()`や`withQuery()`を使ってリクエストを変更します。 例） `$this->body['admin/setting']->addQuery(['extra_param' => 1]);`
