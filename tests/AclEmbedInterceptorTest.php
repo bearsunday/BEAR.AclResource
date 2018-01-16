@@ -13,6 +13,7 @@ use BEAR\Resource\AbstractRequest;
 use BEAR\Resource\Module\ResourceModule;
 use BEAR\Resource\Request;
 use BEAR\Resource\ResourceInterface;
+use BEAR\Resource\ResourceObject;
 use PHPUnit\Framework\TestCase;
 use Ray\Di\Injector;
 use Zend\Permissions\Acl\Acl;
@@ -27,8 +28,7 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => [],
         ];
         $page = $this->getFakePage($aclList);
-        $ro = $page();
-        $this->assertNull($ro->body);
+        $this->assertNull($page->body);
     }
 
     public function testBadResource()
@@ -38,7 +38,6 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => ['__INVALID_RESOURCE__'],
         ];
         $page = $this->getFakePage($aclList);
-        $page();
         $this->assertNull($page->body);
     }
 
@@ -50,8 +49,7 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => ['not_exsists'],
         ];
         $page = $this->getFakePage($aclList);
-        $ro = $page();
-        $this->assertNull($ro->body);
+        $this->assertNull($page->body);
     }
 
     public function testEmbededRoleResource()
@@ -60,7 +58,6 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => ['entries', 'users'],
         ];
         $page = $this->getFakePage($aclList);
-        $page();
         $expected = '{
     "entries": [
         "<entry1>",
@@ -69,7 +66,7 @@ class AclEmbedInterceptorTest extends TestCase
 }
 ';
         $this->assertInstanceOf(Request::class, $page->body['entries']);
-        $view = (string) $ro;
+        $view = (string) $page;
         $this->assertSame($expected, $view);
     }
 
@@ -79,7 +76,6 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => ['entries{?name}', 'users'],
         ];
         $page = $this->getFakePage($aclList);
-        $page();
         $request = $page['entries'];
         /* @var $request AbstractRequest */
         $this->assertSame('app://self/entries?name=BEAR', $request->toUri());
@@ -91,13 +87,12 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => ['admin/entries{?name}', 'users'],
         ];
         $page = $this->getFakePage($aclList);
-        $page();
         $request = $page['admin/entries'];
         /* @var $request AbstractRequest */
-        $this->assertSame('app://self/entries?name=BEAR', $request->toUri());
+        $this->assertSame('app://self/admin/entries?name=BEAR', $request->toUri());
     }
 
-    private function getFakePage(array $resources) : Request
+    private function getFakePage(array $resources) : ResourceObject
     {
         $acl = new Acl();
         $roleGuest = new Role('guest');
@@ -106,13 +101,14 @@ class AclEmbedInterceptorTest extends TestCase
         $acl->addResource(new Resource('entries'));
         $acl->addResource(new Resource('not_exsists'));
         $acl->addResource(new Resource('users'));
-        $acl->allow('guest', ['entries', 'not_exsists']);
+        $acl->addResource(new Resource('admin/entries'));
+        $acl->allow('guest', ['entries', 'admin/entries', 'not_exsists']);
         $acl->allow('admin', 'users');
         $module = new ResourceModule(__NAMESPACE__);
         $module->install(new AclResourceModule($acl, $resources, FakeRoleProvider::class));
         $resource = (new Injector($module, __DIR__ . '/tmp'))->getInstance(ResourceInterface::class);
         /* @var $resource ResourceInterface */
 
-        return $resource->uri('page://self/index')->withQuery(['name' => 'BEAR']);
+        return $resource->uri('page://self/index')->withQuery(['name' => 'BEAR'])();
     }
 }

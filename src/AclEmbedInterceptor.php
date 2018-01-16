@@ -110,7 +110,7 @@ final class AclEmbedInterceptor implements MethodInterceptor
             try {
                 $ro->body[$resource] = clone $this->resource->uri($appUri);
             } catch (BadRequestException $e) {
-                throw new NotFoundResourceException($uri, 500, $e);
+                throw new NotFoundResourceException($appUri, 500, $e);
             }
         }
     }
