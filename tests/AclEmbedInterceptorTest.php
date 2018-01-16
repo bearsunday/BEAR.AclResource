@@ -25,7 +25,7 @@ class AclEmbedInterceptorTest extends TestCase
     public function testNoResource()
     {
         $aclList = [
-            '/index' => [],
+            'page://self/index' => [],
         ];
         $page = $this->getFakePage($aclList);
         $this->assertNull($page->body);
@@ -35,7 +35,9 @@ class AclEmbedInterceptorTest extends TestCase
     {
         $this->expectException(InvalidResourceException::class);
         $aclList = [
-            '/index' => ['__INVALID_RESOURCE__'],
+            'page://self/index' => [
+                '__INVALID_RESOURCE__'
+            ]
         ];
         $page = $this->getFakePage($aclList);
         $this->assertNull($page->body);
@@ -46,7 +48,9 @@ class AclEmbedInterceptorTest extends TestCase
         $this->expectException(NotFoundResourceException::class);
         $this->expectExceptionMessage('app://self/not_exsists');
         $aclList = [
-            '/index' => ['not_exsists'],
+            'page://self/index' => [
+                'app://self/not_exsists'
+            ],
         ];
         $page = $this->getFakePage($aclList);
         $this->assertNull($page->body);
@@ -55,7 +59,10 @@ class AclEmbedInterceptorTest extends TestCase
     public function testEmbededRoleResource()
     {
         $aclList = [
-            '/index' => ['entries', 'users'],
+            'page://self/index' => [
+                'app://self/entries',
+                'app://self/users'
+            ]
         ];
         $page = $this->getFakePage($aclList);
         $expected = '{
@@ -73,7 +80,10 @@ class AclEmbedInterceptorTest extends TestCase
     public function testEmbededRoleResourceWithQuery()
     {
         $aclList = [
-            '/index' => ['entries{?name}', 'users'],
+            'page://self/index' => [
+                'app://self/entries{?name}',
+                'app://self/users'
+            ]
         ];
         $page = $this->getFakePage($aclList);
         $request = $page['entries'];
@@ -84,7 +94,10 @@ class AclEmbedInterceptorTest extends TestCase
     public function testNestedDirectoryResource()
     {
         $aclList = [
-            '/index' => ['admin/entries{?name}', 'users'],
+            'page://self/index' => [
+                'app://self/admin/entries{?name}',
+                'app://self/users'
+            ]
         ];
         $page = $this->getFakePage($aclList);
         $request = $page['admin/entries'];
@@ -98,12 +111,16 @@ class AclEmbedInterceptorTest extends TestCase
         $roleGuest = new Role('guest');
         $acl->addRole($roleGuest);
         $acl->addRole(new Role('admin'), $roleGuest);
-        $acl->addResource(new Resource('entries'));
-        $acl->addResource(new Resource('not_exsists'));
-        $acl->addResource(new Resource('users'));
-        $acl->addResource(new Resource('admin/entries'));
-        $acl->allow('guest', ['entries', 'admin/entries', 'not_exsists']);
-        $acl->allow('admin', 'users');
+        $acl->addResource(new Resource('app://self/entries'));
+        $acl->addResource(new Resource('app://self/not_exsists'));
+        $acl->addResource(new Resource('app://self/users'));
+        $acl->addResource(new Resource('app://self/admin/entries'));
+        $acl->allow('guest', [
+            'app://self/entries',
+            'app://self/admin/entries',
+            'app://self/not_exsists'
+        ]);
+        $acl->allow('admin', 'app://self/users');
         $module = new ResourceModule(__NAMESPACE__);
         $module->install(new AclResourceModule($acl, $resources, FakeRoleProvider::class));
         $resource = (new Injector($module, __DIR__ . '/tmp'))->getInstance(ResourceInterface::class);

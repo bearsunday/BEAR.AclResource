@@ -10,7 +10,7 @@ use BEAR\Resource\ResourceObject;
 
 class Index extends ResourceObject
 {
-    public function onGet(string $name = '') :ResourceObject
+    public function onGet(string $name = '') : ResourceObject
     {
         return $this;
     }

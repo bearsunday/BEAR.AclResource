@@ -67,14 +67,13 @@ final class AclEmbedInterceptor implements MethodInterceptor
     {
         $ro = $invocation->getThis();
         /* @var $ro \BEAR\Resource\ResourceObject */
-
-        $isTarget = array_key_exists($ro->uri->path, $this->resources);
+        $uri = sprintf('%s://%s%s', $ro->uri->scheme, $ro->uri->host, $ro->uri->path);
+        $isTarget = array_key_exists($uri, $this->resources);
         if (! $isTarget) {
             return $invocation->proceed();
         }
         $this->namedParams = $this->getNamedParams($invocation);
-        $page = $ro->uri->path;
-        $resources = $this->resources[$page];
+        $resources = $this->resources[$uri];
         $role = $this->roleProvider->get();
         $this->embedded($resources, $role, $ro);
 
@@ -97,20 +96,25 @@ final class AclEmbedInterceptor implements MethodInterceptor
     {
         foreach ($resources as $templatedUri) {
             $uri = uri_template($templatedUri, $this->namedParams);
-            $resource = parse_url($uri)['path'];
+            if (! filter_var($uri, FILTER_VALIDATE_URL)) {
+                throw new InvalidResourceException($uri);
+            }
+            $parsedUri = parse_url($uri);
+            $path = parse_url($uri)['path'];
+            $resourceUri = sprintf('%s://%s%s', $parsedUri['scheme'], $parsedUri['host'], $parsedUri['path']);
             try {
-                $isAllowed = $this->acl->isAllowed($role, $resource);
+                $isAllowed = $this->acl->isAllowed($role, $resourceUri);
             } catch (InvalidArgumentException $e) {
-                throw new InvalidResourceException($resource);
+                throw new InvalidResourceException($uri);
             }
             if (! $isAllowed) {
                 continue;
             }
-            $appUri = sprintf('app://self/%s', $uri);
             try {
-                $ro->body[$resource] = clone $this->resource->uri($appUri);
+                $pathIndex = substr($path, 1);
+                $ro->body[$pathIndex] = clone $this->resource->uri($uri);
             } catch (BadRequestException $e) {
-                throw new NotFoundResourceException($appUri, 500, $e);
+                throw new NotFoundResourceException($uri, 500, $e);
             }
         }
     }
