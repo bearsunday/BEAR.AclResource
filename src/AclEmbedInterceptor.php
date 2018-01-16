@@ -41,6 +41,11 @@ final class AclEmbedInterceptor implements MethodInterceptor
     private $resource;
 
     /**
+     * @var array
+     */
+    private $namedParams;
+
+    /**
      * @Named("resources=resources")
      */
     public function __construct(
@@ -67,6 +72,7 @@ final class AclEmbedInterceptor implements MethodInterceptor
         if (! $isTarget) {
             return $invocation->proceed();
         }
+        $this->namedParams = $this->getNamedParams($invocation);
         $page = $ro->uri->path;
         $resources = $this->resources[$page];
         $role = $this->roleProvider->get();
@@ -75,9 +81,23 @@ final class AclEmbedInterceptor implements MethodInterceptor
         return $ro;
     }
 
+    private function getNamedParams(MethodInvocation $invocation) : array
+    {
+        $args = $invocation->getArguments()->getArrayCopy();
+        $params = $invocation->getMethod()->getParameters();
+        $namedParameters = [];
+        foreach ($params as $param) {
+            $namedParameters[$param->name] = array_shift($args);
+        }
+
+        return $namedParameters;
+    }
+
     private function embedded(array $resources, string $role, ResourceObject $ro)
     {
-        foreach ($resources as $resource) {
+        foreach ($resources as $templatedUri) {
+            $uri = uri_template($templatedUri, $this->namedParams);
+            $resource = parse_url($uri)['path'];
             try {
                 $isAllowed = $this->acl->isAllowed($role, $resource);
             } catch (InvalidArgumentException $e) {
@@ -86,9 +106,9 @@ final class AclEmbedInterceptor implements MethodInterceptor
             if (! $isAllowed) {
                 continue;
             }
-            $uri = sprintf('app://self/%s', $resource);
+            $appUri = sprintf('app://self/%s', $uri);
             try {
-                $ro->body[$resource] = clone $this->resource->uri($uri);
+                $ro->body[$resource] = clone $this->resource->uri($appUri);
             } catch (BadRequestException $e) {
                 throw new NotFoundResourceException($uri, 500, $e);
             }

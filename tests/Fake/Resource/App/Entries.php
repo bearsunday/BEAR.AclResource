@@ -15,7 +15,7 @@ class Entries extends ResourceObject
         '<entry2>'
     ];
 
-    public function onGet()
+    public function onGet($name = '')
     {
         return $this;
     }

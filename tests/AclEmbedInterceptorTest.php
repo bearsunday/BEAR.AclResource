@@ -9,6 +9,7 @@ namespace BEAR\AclResourceModule;
 use BEAR\AclResourceModule\Exception\InvalidResourceException;
 use BEAR\AclResourceModule\Exception\NotFoundResourceException;
 use BEAR\AclResourceModule\Resource\Page\Index;
+use BEAR\Resource\AbstractRequest;
 use BEAR\Resource\Module\ResourceModule;
 use BEAR\Resource\Request;
 use BEAR\Resource\ResourceInterface;
@@ -72,6 +73,18 @@ class AclEmbedInterceptorTest extends TestCase
         $this->assertSame($expected, $view);
     }
 
+    public function testEmbededRoleResourceWithQuery()
+    {
+        $aclList = [
+            '/index' => ['entries{?name}', 'users'],
+        ];
+        $page = $this->getFakePage($aclList);
+        $page();
+        $request = $page['entries'];
+        /* @var $request AbstractRequest */
+        $this->assertSame('app://self/entries?name=BEAR', $request->toUri());
+    }
+
     private function getFakePage(array $resources) : Request
     {
         $acl = new Acl();
@@ -85,9 +98,9 @@ class AclEmbedInterceptorTest extends TestCase
         $acl->allow('admin', 'users');
         $module = new ResourceModule(__NAMESPACE__);
         $module->install(new AclResourceModule($acl, $resources, FakeRoleProvider::class));
-        $resource = (new Injector($module))->getInstance(ResourceInterface::class);
+        $resource = (new Injector($module, __DIR__ . '/tmp'))->getInstance(ResourceInterface::class);
         /* @var $resource ResourceInterface */
 
-        return $resource->uri('page://self/index');
+        return $resource->uri('page://self/index')->withQuery(['name' => 'BEAR']);
     }
 }
