@@ -41,15 +41,22 @@ class AppModule extends AbstractModule
         $roleGuest = new Role('guest');
         $acl->addRole($roleGuest);
         $acl->addRole(new Role('owner'), $roleGuest);
-        $acl->addResource(new Resource('entries'));
-        $acl->addResource(new Resource('users'));
-        $acl->addResource(new Resource('comments'));
-        $acl->allow('guest', ['entries', 'comments']);
-        $acl->allow('admin', 'friends');
+        $acl->addResource(new Resource('app://self/entries'));
+        $acl->addResource(new Resource('app://self/users'));
+        $acl->addResource(new Resource('app://self/comments'));
+        $acl->allow('guest', ['app://self/entries', 'app://self/comments']);
+        $acl->allow('admin', 'app://self/friends');
         // configure embedded resource list
         $resources = [
-            '/blog' => ['entries', 'comments', 'friends'],
-            '/admin/setting' => ['user{?id}', 'freinds?user_id={id}'],
+            'page://self//blog' => [
+                 'app://self/entries',
+                 'app://self/comments',
+                 'app://self/friends'
+             ],
+            'page://self//admin/setting' => [
+                'app://self/user{?id}',
+                'app://self/freinds?user_id={id}'
+            ]
         ];
         // define provider
         $roleProviderClass = DevRoleProvider::class;
