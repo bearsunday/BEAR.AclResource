@@ -38,8 +38,8 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => ['__INVALID_RESOURCE__'],
         ];
         $page = $this->getFakePage($aclList);
-        $ro = $page();
-        $this->assertNull($ro->body);
+        $page();
+        $this->assertNull($page->body);
     }
 
     public function testBadRequestResource()
@@ -60,7 +60,7 @@ class AclEmbedInterceptorTest extends TestCase
             '/index' => ['entries', 'users'],
         ];
         $page = $this->getFakePage($aclList);
-        $ro = $page();
+        $page();
         $expected = '{
     "entries": [
         "<entry1>",
@@ -68,7 +68,7 @@ class AclEmbedInterceptorTest extends TestCase
     ]
 }
 ';
-        $this->assertInstanceOf(Request::class, $ro->body['entries']);
+        $this->assertInstanceOf(Request::class, $page->body['entries']);
         $view = (string) $ro;
         $this->assertSame($expected, $view);
     }
@@ -81,6 +81,18 @@ class AclEmbedInterceptorTest extends TestCase
         $page = $this->getFakePage($aclList);
         $page();
         $request = $page['entries'];
+        /* @var $request AbstractRequest */
+        $this->assertSame('app://self/entries?name=BEAR', $request->toUri());
+    }
+
+    public function testNestedDirectoryResource()
+    {
+        $aclList = [
+            '/index' => ['admin/entries{?name}', 'users'],
+        ];
+        $page = $this->getFakePage($aclList);
+        $page();
+        $request = $page['admin/entries'];
         /* @var $request AbstractRequest */
         $this->assertSame('app://self/entries?name=BEAR', $request->toUri());
     }
