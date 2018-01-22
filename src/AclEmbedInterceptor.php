@@ -77,7 +77,7 @@ final class AclEmbedInterceptor implements MethodInterceptor
         $role = $this->roleProvider->get();
         $this->embedded($resources, $role, $ro);
 
-        return $ro;
+        return $invocation->proceed();
     }
 
     private function getNamedParams(MethodInvocation $invocation) : array
@@ -112,7 +112,8 @@ final class AclEmbedInterceptor implements MethodInterceptor
             }
             try {
                 $pathIndex = substr($path, 1);
-                $ro->body[$pathIndex] = clone $this->resource->uri($uri);
+                $rel = str_replace('/', '_', $pathIndex);
+                $ro->body[$rel] = clone $this->resource->uri($uri);
             } catch (BadRequestException $e) {
                 throw new NotFoundResourceException($uri, 500, $e);
             }

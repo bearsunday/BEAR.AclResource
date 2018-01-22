@@ -96,13 +96,14 @@ class AclEmbedInterceptorTest extends TestCase
         $aclList = [
             'page://self/index' => [
                 'app://self/admin/entries{?name}',
+                'app://self/admin/entries?user_name={name}',
                 'app://self/users'
             ]
         ];
         $page = $this->getFakePage($aclList);
-        $request = $page['admin/entries'];
+        $request = $page['admin_entries'];
         /* @var $request AbstractRequest */
-        $this->assertSame('app://self/admin/entries?name=BEAR', $request->toUri());
+        $this->assertSame('app://self/admin/entries?user_name=BEAR', $request->toUri());
     }
 
     private function getFakePage(array $resources) : ResourceObject
