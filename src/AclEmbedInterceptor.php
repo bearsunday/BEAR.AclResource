@@ -77,7 +77,7 @@ final class AclEmbedInterceptor implements MethodInterceptor
         $role = $this->roleProvider->get();
         $this->embedded($resources, $role, $ro);
 
-        return $this->$invocation->proceed();
+        return $invocation->proceed();
     }
 
     private function getNamedParams(MethodInvocation $invocation) : array
