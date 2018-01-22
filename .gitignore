@@ -12,4 +12,3 @@ phpunit.xml
 composer.lock
 vendor/
 .php_cs.cache
-tests/tmp
